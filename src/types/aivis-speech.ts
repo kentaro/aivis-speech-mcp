@@ -16,30 +16,132 @@ export interface Style {
   id: number;
 }
 
-// 音声合成リクエストの型定義
+/**
+ * 音声合成リクエスト
+ */
 export interface SynthesisRequest {
+  /**
+   * 合成するテキスト
+   */
   text: string;
+
+  /**
+   * 話者ID
+   */
   speaker: number;
+
+  /**
+   * スタイルID
+   */
   style_id?: number;
+
+  /**
+   * 話速のスケール（1.0が標準）
+   */
   speed_scale?: number;
+
+  /**
+   * 音高のスケール（1.0が標準）
+   */
   pitch_scale?: number;
+
+  /**
+   * イントネーションのスケール（1.0が標準）
+   */
   intonation_scale?: number;
+
+  /**
+   * 音量のスケール（1.0が標準）
+   */
   volume_scale?: number;
+
+  /**
+   * 音声の先頭の無音時間（秒）
+   */
   pre_phoneme_length?: number;
+
+  /**
+   * 音声の末尾の無音時間（秒）
+   */
   post_phoneme_length?: number;
+
+  /**
+   * 出力音声のサンプリングレート（Hz）
+   */
   output_sampling_rate?: number;
 }
 
-// 音声合成レスポンスの型定義
+/**
+ * 音声合成レスポンス
+ */
 export interface SynthesisResponse {
-  audio: string; // Base64エンコードされた音声データ
-  sampling_rate: number;
+  /**
+   * 音声データ
+   */
+  audioData?: ArrayBuffer;
+
+  /**
+   * Base64エンコードされた音声データ（テスト用）
+   */
+  audio?: string;
+
+  /**
+   * サンプリングレート
+   */
+  sampling_rate?: number;
 }
 
-// 音声合成のステータスレスポンスの型定義
-export interface SynthesisStatusResponse {
-  is_success: boolean;
-  message: string;
+// AudioQuery
+export interface AudioQuery {
+  /**
+   * 合成するテキスト
+   */
+  text: string;
+
+  /**
+   * スタイルID
+   */
+  style_id: number;
+
+  /**
+   * 話速のスケール（1.0が標準）
+   */
+  speed_scale: number;
+
+  /**
+   * 音高のスケール（1.0が標準）
+   */
+  pitch_scale: number;
+
+  /**
+   * イントネーションのスケール（1.0が標準）
+   */
+  intonation_scale: number;
+
+  /**
+   * 音量のスケール（1.0が標準）
+   */
+  volume_scale: number;
+
+  /**
+   * 音声の先頭の無音時間（秒）
+   */
+  pre_phoneme_length: number;
+
+  /**
+   * 音声の末尾の無音時間（秒）
+   */
+  post_phoneme_length: number;
+
+  /**
+   * 出力音声のサンプリングレート（Hz）
+   */
+  output_sampling_rate: number;
+
+  /**
+   * その他のパラメータ
+   */
+  [key: string]: any;
 }
 
 // AivisSpeech APIのエンドポイント

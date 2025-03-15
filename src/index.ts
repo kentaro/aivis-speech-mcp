@@ -1,5 +1,6 @@
+#!/usr/bin/env node
+
 import mcpService from './services/mcp-service';
-import config from './config';
 
 /**
  * アプリケーションのメイン関数
@@ -7,7 +8,7 @@ import config from './config';
 async function main() {
   try {
     // MCPサーバーを起動
-    await mcpService.start(config.server.port, config.server.host);
+    await mcpService.start();
 
     // 終了時の処理
     process.on('SIGINT', () => {

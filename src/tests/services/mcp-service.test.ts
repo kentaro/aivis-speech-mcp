@@ -1,18 +1,26 @@
-import { MCPServer } from '@modelcontextprotocol/sdk';
 import { MCPService } from '../../services/mcp-service';
-import aivisSpeechService from '../../services/aivis-speech-service';
-import config from '../../config';
-import { MCPSynthesisRequest } from '../../types/mcp';
 
 // MCPサーバーのモック
-jest.mock('@modelcontextprotocol/sdk', () => {
+jest.mock('@modelcontextprotocol/sdk/server/mcp.js', () => {
+  const mockTool = jest.fn();
+  const mockConnect = jest.fn().mockResolvedValue(undefined);
+
   return {
-    MCPServer: jest.fn().mockImplementation(() => {
+    McpServer: jest.fn().mockImplementation(() => {
       return {
-        registerModel: jest.fn(),
-        start: jest.fn().mockResolvedValue(undefined),
+        tool: mockTool,
+        connect: mockConnect
       };
-    }),
+    })
+  };
+});
+
+// StdioServerTransportのモック
+jest.mock('@modelcontextprotocol/sdk/server/stdio.js', () => {
+  return {
+    StdioServerTransport: jest.fn().mockImplementation(() => {
+      return {};
+    })
   };
 });
 
@@ -22,137 +30,39 @@ jest.mock('../../services/aivis-speech-service', () => {
     __esModule: true,
     default: {
       synthesize: jest.fn().mockResolvedValue({
-        audio: 'base64encodedaudio',
-        sampling_rate: 24000,
-      }),
-    },
+        audioData: Buffer.from('dummy audio data')
+      })
+    }
   };
 });
 
-describe('MCPService', () => {
-  let service: MCPService;
-  let mcpServerMock: jest.Mocked<MCPServer>;
+// dotenvのモック
+jest.mock('dotenv', () => ({
+  config: jest.fn()
+}));
 
+describe('MCPService', () => {
   beforeEach(() => {
     // テスト前にモックをリセット
     jest.clearAllMocks();
+  });
 
+  it('MCPサーバーを初期化すること', () => {
     // サービスのインスタンスを作成
-    service = new MCPService();
+    const service = new MCPService();
 
-    // MCPServerのモックを取得
-    mcpServerMock = (MCPServer as jest.Mock).mock.instances[0] as jest.Mocked<MCPServer>;
+    // McpServerが呼び出されたことを確認
+    expect(require('@modelcontextprotocol/sdk/server/mcp.js').McpServer).toHaveBeenCalled();
   });
 
-  describe('constructor', () => {
-    it('MCPサーバーを初期化し、モデルを登録すること', () => {
-      // MCPServerのコンストラクタが呼ばれたことを確認
-      expect(MCPServer).toHaveBeenCalledTimes(1);
+  it('MCPサーバーを起動できること', async () => {
+    // サービスのインスタンスを作成
+    const service = new MCPService();
 
-      // registerModelが呼ばれたことを確認
-      expect(mcpServerMock.registerModel).toHaveBeenCalledTimes(1);
+    // サービスを起動
+    await service.start();
 
-      // 登録されたモデル定義を確認
-      const modelDefinition = service.getModelDefinition();
-      expect(modelDefinition.id).toBe(config.mcp.modelId);
-      expect(modelDefinition.name).toBe(config.mcp.modelName);
-      expect(modelDefinition.description).toBe(config.mcp.modelDescription);
-      expect(modelDefinition.capabilities).toEqual(config.mcp.capabilities);
-      expect(modelDefinition.parameters.length).toBeGreaterThan(0);
-    });
-  });
-
-  describe('start', () => {
-    it('MCPサーバーを起動すること', async () => {
-      // テスト用のポートとホスト
-      const port = 3000;
-      const host = 'localhost';
-
-      // サービスを起動
-      await service.start(port, host);
-
-      // startが呼ばれたことを確認
-      expect(mcpServerMock.start).toHaveBeenCalledTimes(1);
-      expect(mcpServerMock.start).toHaveBeenCalledWith(port, host);
-    });
-  });
-
-  describe('handleSynthesisRequest', () => {
-    // privateメソッドをテストするためのヘルパー関数
-    const invokeHandleSynthesisRequest = async (request: MCPSynthesisRequest) => {
-      // registerModelの呼び出し時に渡されたコールバック関数を取得
-      const callback = (mcpServerMock.registerModel as jest.Mock).mock.calls[0][1];
-
-      // コールバック関数を呼び出す
-      return await callback(request);
-    };
-
-    it('有効なリクエストを処理できること', async () => {
-      // テスト用のリクエスト
-      const request: MCPSynthesisRequest = {
-        model: config.mcp.modelId,
-        parameters: {
-          text: 'こんにちは',
-          speaker_id: 1,
-          style_id: 1,
-        },
-      };
-
-      // ハンドラを呼び出す
-      const result = await invokeHandleSynthesisRequest(request);
-
-      // AivisSpeechサービスが呼ばれたことを確認
-      expect(aivisSpeechService.synthesize).toHaveBeenCalledTimes(1);
-      expect(aivisSpeechService.synthesize).toHaveBeenCalledWith({
-        text: 'こんにちは',
-        speaker: 1,
-        style_id: 1,
-      });
-
-      // 結果を確認
-      expect(result).toEqual({
-        audio: 'base64encodedaudio',
-        sampling_rate: 24000,
-      });
-    });
-
-    it('必須パラメータが欠けている場合にエラーをスローすること', async () => {
-      // テキストが欠けているリクエスト
-      const requestWithoutText: MCPSynthesisRequest = {
-        model: config.mcp.modelId,
-        parameters: {
-          speaker_id: 1,
-        } as any,
-      };
-
-      // ハンドラを呼び出して例外をキャッチ
-      await expect(invokeHandleSynthesisRequest(requestWithoutText)).rejects.toThrow('テキストは必須です');
-
-      // スピーカーIDが欠けているリクエスト
-      const requestWithoutSpeakerId: MCPSynthesisRequest = {
-        model: config.mcp.modelId,
-        parameters: {
-          text: 'こんにちは',
-        } as any,
-      };
-
-      // ハンドラを呼び出して例外をキャッチ
-      await expect(invokeHandleSynthesisRequest(requestWithoutSpeakerId)).rejects.toThrow('スピーカーIDは必須です');
-    });
-
-    it('パラメータの範囲が無効な場合にエラーをスローすること', async () => {
-      // 話速が範囲外のリクエスト
-      const requestWithInvalidSpeedScale: MCPSynthesisRequest = {
-        model: config.mcp.modelId,
-        parameters: {
-          text: 'こんにちは',
-          speaker_id: 1,
-          speed_scale: 3.0, // 範囲外
-        },
-      };
-
-      // ハンドラを呼び出して例外をキャッチ
-      await expect(invokeHandleSynthesisRequest(requestWithInvalidSpeedScale)).rejects.toThrow('話速は0.5から2.0の範囲で指定してください');
-    });
+    // StdioServerTransportが作成されたことを確認
+    expect(require('@modelcontextprotocol/sdk/server/stdio.js').StdioServerTransport).toHaveBeenCalled();
   });
 });

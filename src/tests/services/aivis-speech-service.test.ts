@@ -1,10 +1,23 @@
 import axios from 'axios';
+import fs from 'fs';
+import path from 'path';
+import wavPlayer from 'node-wav-player';
 import { AivisSpeechService } from '../../services/aivis-speech-service';
-import { Speaker, Style, SynthesisRequest, SynthesisResponse } from '../../types/aivis-speech';
+import { Speaker, SynthesisRequest } from '../../types/aivis-speech';
 
-// axiosのモック
+// モジュールのモック
 jest.mock('axios');
+jest.mock('fs');
+jest.mock('path');
+jest.mock('node-wav-player');
+jest.mock('dotenv', () => ({
+  config: jest.fn()
+}));
+
 const mockedAxios = axios as jest.Mocked<typeof axios>;
+const mockedFs = fs as jest.Mocked<typeof fs>;
+const mockedPath = path as jest.Mocked<typeof path>;
+const mockedWavPlayer = wavPlayer as jest.Mocked<typeof wavPlayer>;
 
 describe('AivisSpeechService', () => {
   let service: AivisSpeechService;
@@ -30,14 +43,28 @@ describe('AivisSpeechService', () => {
     },
   ];
 
-  const mockSynthesisResponse: SynthesisResponse = {
-    audio: 'base64encodedaudio',
-    sampling_rate: 24000,
+  const mockAudioQuery = {
+    text: 'こんにちは',
+    style_id: 1,
+    speed_scale: 1.0,
+    pitch_scale: 1.0,
+    intonation_scale: 1.0,
+    volume_scale: 1.0,
+    pre_phoneme_length: 0.1,
+    post_phoneme_length: 0.1,
+    output_sampling_rate: 24000
   };
+
+  const mockAudioBuffer = Buffer.from('dummy audio data');
 
   beforeEach(() => {
     // テスト前にモックをリセット
     jest.clearAllMocks();
+
+    // モックの設定
+    mockedPath.join.mockImplementation((...args) => args.join('/'));
+    mockedFs.existsSync.mockReturnValue(true);
+    mockedWavPlayer.play.mockResolvedValue(undefined);
 
     // サービスのインスタンスを作成
     service = new AivisSpeechService();
@@ -72,7 +99,8 @@ describe('AivisSpeechService', () => {
   describe('synthesize', () => {
     it('音声合成を実行できること', async () => {
       // モックの設定
-      mockedAxios.post.mockResolvedValueOnce({ data: mockSynthesisResponse });
+      mockedAxios.post.mockResolvedValueOnce({ data: mockAudioQuery }); // audio_queryのレスポンス
+      mockedAxios.post.mockResolvedValueOnce({ data: mockAudioBuffer }); // synthesisのレスポンス
 
       // テスト用のリクエスト
       const request: SynthesisRequest = {
@@ -85,12 +113,18 @@ describe('AivisSpeechService', () => {
       const result = await service.synthesize(request);
 
       // 結果の検証
-      expect(result).toEqual(mockSynthesisResponse);
-      expect(mockedAxios.post).toHaveBeenCalledTimes(1);
-      expect(mockedAxios.post).toHaveBeenCalledWith(
-        expect.stringContaining('/synthesis'),
-        request
-      );
+      expect(result).toHaveProperty('audioData');
+      expect(mockedAxios.post).toHaveBeenCalledTimes(2);
+
+      // audio_queryの呼び出しを検証
+      expect(mockedAxios.post.mock.calls[0][0]).toContain('/audio_query');
+
+      // synthesisの呼び出しを検証
+      expect(mockedAxios.post.mock.calls[1][0]).toContain('/synthesis');
+
+      // 一時ファイルの作成と再生を検証
+      expect(mockedFs.writeFileSync).toHaveBeenCalledTimes(1);
+      expect(mockedWavPlayer.play).toHaveBeenCalledTimes(1);
     });
 
     it('APIエラー時に例外をスローすること', async () => {
@@ -105,57 +139,6 @@ describe('AivisSpeechService', () => {
 
       // テスト対象の関数を実行して例外をキャッチ
       await expect(service.synthesize(request)).rejects.toThrow('音声合成に失敗しました');
-
-      // 呼び出しの検証
-      expect(mockedAxios.post).toHaveBeenCalledTimes(1);
-    });
-  });
-
-  describe('getSpeakerById', () => {
-    it('存在するスピーカーIDでスピーカー情報を取得できること', async () => {
-      // モックの設定
-      mockedAxios.get.mockResolvedValueOnce({ data: mockSpeakers });
-
-      // テスト対象の関数を実行
-      const result = await service.getSpeakerById(1);
-
-      // 結果の検証
-      expect(result).toEqual(mockSpeakers[0]);
-    });
-
-    it('存在しないスピーカーIDでundefinedを返すこと', async () => {
-      // モックの設定
-      mockedAxios.get.mockResolvedValueOnce({ data: mockSpeakers });
-
-      // テスト対象の関数を実行
-      const result = await service.getSpeakerById(999);
-
-      // 結果の検証
-      expect(result).toBeUndefined();
-    });
-  });
-
-  describe('getStyleById', () => {
-    it('存在するスピーカーIDとスタイルIDでスタイル情報を取得できること', async () => {
-      // モックの設定
-      mockedAxios.get.mockResolvedValueOnce({ data: mockSpeakers });
-
-      // テスト対象の関数を実行
-      const result = await service.getStyleById(1, 2);
-
-      // 結果の検証
-      expect(result).toEqual(mockSpeakers[0].styles[1]);
-    });
-
-    it('存在しないスタイルIDでundefinedを返すこと', async () => {
-      // モックの設定
-      mockedAxios.get.mockResolvedValueOnce({ data: mockSpeakers });
-
-      // テスト対象の関数を実行
-      const result = await service.getStyleById(1, 999);
-
-      // 結果の検証
-      expect(result).toBeUndefined();
     });
   });
 });

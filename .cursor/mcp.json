@@ -1,14 +1,8 @@
 {
   "mcpServers": {
     "AivisSpeech-MCP": {
-      "command": "cmd",
-      "args": ["/c", "start-mcp-server-bg.bat"],
-      "cwd": "${workspaceRoot}",
-      "env": {},
-      "transport": {
-        "kind": "http",
-        "url": "http://localhost:3000"
-      }
+      "command": "node",
+      "args": ["C:/Users/kenta/src/github.com/kentaro/aivis-speech-mcp/dist/index.js"]
     }
   }
 }

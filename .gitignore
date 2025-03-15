@@ -29,3 +29,6 @@ coverage/
 # OS specific files
 .DS_Store
 Thumbs.db
+
+# MCP settings
+.cursor/mcp.json

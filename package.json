@@ -2,25 +2,44 @@
   "name": "aivis-speech-mcp",
   "version": "1.0.0",
   "main": "dist/index.js",
+  "bin": {
+    "aivis-speech-mcp": "./dist/index.js"
+  },
   "scripts": {
     "start": "node dist/index.js",
     "dev": "nodemon --exec ts-node src/index.ts",
     "build": "tsc",
     "test": "jest",
-    "test:watch": "jest --watch"
+    "test:watch": "jest --watch",
+    "prepare": "npm run build"
   },
-  "keywords": [],
+  "keywords": [
+    "aivis",
+    "speech",
+    "mcp",
+    "modelcontextprotocol"
+  ],
   "author": "",
   "license": "ISC",
-  "description": "",
-  "devDependencies": {
+  "description": "AivisSpeech MCP Server",
+  "dependencies": {
     "@modelcontextprotocol/sdk": "^1.7.0",
+    "@types/cors": "^2.8.17",
+    "@types/uuid": "^10.0.0",
+    "axios": "^1.8.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^5.0.1",
+    "node-wav-player": "^1.0.0",
+    "play-sound": "^1.1.6",
+    "speaker": "^0.5.5",
+    "uuid": "^11.1.0",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
     "@types/express": "^5.0.0",
     "@types/jest": "^29.5.14",
     "@types/node": "^22.13.10",
-    "axios": "^1.8.3",
-    "dotenv": "^16.4.7",
-    "express": "^5.0.1",
     "jest": "^29.7.0",
     "nodemon": "^3.1.9",
     "ts-jest": "^29.2.6",
