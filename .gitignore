@@ -1,0 +1,46 @@
+# 依存関係
+node_modules/
+package-lock.json
+yarn.lock
+
+# ビルド出力
+dist/
+build/
+*.tsbuildinfo
+
+# 環境変数
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+
+# ログ
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# テスト
+coverage/
+
+# エディタ設定
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS関連
+.DS_Store
+Thumbs.db
+
+# 一時ファイル
+tmp/
+temp/
+*.tmp
+
+# 音声ファイル
+*.wav
+*.mp3
+*.ogg
