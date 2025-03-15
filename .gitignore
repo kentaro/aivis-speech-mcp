@@ -1,46 +1,31 @@
-# 依存関係
+# Dependency directories
 node_modules/
-package-lock.json
-yarn.lock
 
-# ビルド出力
+# Build output
 dist/
-build/
-*.tsbuildinfo
 
-# 環境変数
+# Environment variables
 .env
-.env.local
-.env.development
-.env.test
-.env.production
 
-# ログ
-logs/
+# Logs
+logs
 *.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# テスト
+# Coverage directory used by tools like istanbul
 coverage/
 
-# エディタ設定
-.idea/
-.vscode/
-*.swp
-*.swo
+# TypeScript cache
+*.tsbuildinfo
 
-# OS関連
+# Optional npm cache directory
+.npm
+
+# Optional eslint cache
+.eslintcache
+
+# OS specific files
 .DS_Store
 Thumbs.db
-
-# 一時ファイル
-tmp/
-temp/
-*.tmp
-
-# 音声ファイル
-*.wav
-*.mp3
-*.ogg
