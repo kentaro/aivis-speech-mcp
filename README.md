@@ -2,6 +2,10 @@
 
 AivisSpeech用のModel Context Protocol (MCP) サーバーの実装です。このサーバーは、AivisSpeech Engineと連携して、音声合成のためのインターフェースを提供します。MCPプロトコルを通じて、AIアシスタントなどのアプリケーションからAivisSpeechの音声合成機能を簡単に利用できるようになります。
 
+<a href="https://glama.ai/mcp/servers/@kentaro/aivis-speech-mcp">
+  <img width="380" height="200" src="https://glama.ai/mcp/servers/@kentaro/aivis-speech-mcp/badge" alt="AivisSpeech Server MCP server" />
+</a>
+
 ## 概要
 
 AivisSpeech MCP サーバーは以下の機能を提供します：
